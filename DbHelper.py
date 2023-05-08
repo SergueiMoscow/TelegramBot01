@@ -54,7 +54,7 @@ class DbHelper:
             return f'\'{expr}\''
 
     @classmethod
-    def insert(cls, table: str, fields_list: list, values_list: list):
+    def insert(cls, table: str, fields_list: list, values_list: list) -> int:
         fields_list = list(f'`{field}`' for field in fields_list)
         fields = ', '.join(fields_list)
         values_format = [cls.get_format(value) for value in values_list]
@@ -69,4 +69,34 @@ class DbHelper:
         cursor = cls.connection.cursor()
         cursor.execute(query, tuple_values)
         cls.connection.commit()
+        return cursor.lastrowid
+
+    @classmethod
+    def update_or_insert_one(cls, table: str, fields: list, values: list, where: str) -> int:
+        rows = cls.select(table, where, fields.append('id'))
+        if len(rows) == 0:
+            return cls.insert(table, fields, values)
+        row_id: int = rows[0]['id']
+        # Меняем where, т.к. меняем ТОЛЬКО ОДНУ запись!
+        where = f"id={row_id}"
+        field_list = ', '.join([f'{field} = {cls.get_value(value)}' for field, value in zip(fields, values)])
+        query: str = f'UPDATE `{table}` set {field_list} WHERE {where}'
+        print(f'Query: {query}')
+        cursor = cls.connection.cursor()
+        cursor.execute(query)
+        cls.connection.commit()
+        return row_id
+
+    @classmethod
+    def select(cls, table: str, where: str, fields: list = None) -> pymysql.cursors:
+        if fields is None:
+            fields_list = ' * '
+        else:
+            fields_list = list(f'`{field}`' for field in fields)
+            fields_list = ', '.join(fields_list)
+        query: str = f'SELECT {fields_list} from `{table}` where {where}'
+        print(f'Query: {query}')
+        cursor = cls.connection.cursor()
+        cursor.execute(query)
+        return cursor.fetchall()
 
