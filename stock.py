@@ -34,6 +34,7 @@ def get_info(figi):
     )
     print(f'result type: {type(image)}')
     return image
+    # return result
 
 
 def find_instruments(query: str) -> pd.DataFrame:
@@ -43,8 +44,8 @@ def find_instruments(query: str) -> pd.DataFrame:
         # print(f'find_instruments 1st df: {df}')
         if df.empty:
             return None
-        df = df[df['class_code'].isin(['TQBR', 'SPBFUT'])]  # [['figi', 'ticker', 'name']]
-        df.to_csv(f'instr{query}.csv')
+        df = df[df['class_code'].isin(['TQBR', 'SPBFUT'])][['figi', 'ticker', 'name']]
+        # df.to_csv(f'instr{query}.csv')
         # print(f'<{query}>')
         # print(df)
         # print(f'find_indtruments shape {df.shape[0]}')
@@ -89,7 +90,7 @@ def get_candles(figi, days_before=1) -> list:
         ):
             candles.append(candle)
     df = pd.DataFrame(candles)
-    df.to_csv(f'candles_{figi}.csv')
+    # df.to_csv(f'candles_{figi}.csv')
     return candles
 
 
@@ -102,14 +103,7 @@ def get_change_string(open: float, price: float):
 
 
 def count_end_zeros(string: str) -> int:
-    zeros: int = 0
-    for i in string[::-1]:
-        if i == '0':
-            zeros += 1
-        else:
-            break
-    print(zeros)
-    return zeros
+    return min((i for i, c in enumerate(string[::-1], 0) if c != '0'), default=1)
 
 
 def beautify_price(price: float, min_price_increment: float):

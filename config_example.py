@@ -12,3 +12,5 @@ mysql_port = 3306
 mysql_user = 'mysql_user_name'
 mysql_password = 'mysql_password'
 mysql_db = 'mysql_database_name'
+
+instruction = '/a - анекдот\n/s - история\nЦены на акции/фьючерсы МосБиржи, например:\n/SBER Сбербанк \n/GAZP - Газпром\nи т.д.'

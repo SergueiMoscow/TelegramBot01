@@ -1,6 +1,5 @@
 # https://www.youtube.com/watch?v=y65BZbNB0YA
 # https://core.telegram.org/bots/webapps
-import aiogram
 from aiogram import Bot, Dispatcher, executor, types
 from PIL import Image
 import json
@@ -18,7 +17,7 @@ dp = Dispatcher(bot)
 async def start(message: types.Message):
     markup = types.ReplyKeyboardMarkup()
     # markup.add(types.KeyboardButton('Меню', web_app=WebAppInfo(url=config.url_menu)))
-    await message.answer(f'Привет, {message.from_user.username}!', reply_markup=markup)
+    await message.answer(f'Привет, {message.from_user.username}!\n{config.instruction}', reply_markup=markup)
 
 
 @dp.message_handler(content_types=['web_app_data'])
