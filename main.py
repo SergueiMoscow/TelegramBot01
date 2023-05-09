@@ -42,7 +42,7 @@ async def check_text(message: types.Message):
             bio.seek(0)
             await bot.send_photo(message.from_user.id, photo=bio)
         else:
-            await message.answer(type(answer))
+            await message.answer(answer)
 
 
 @dp.message_handler(content_types='photo')
