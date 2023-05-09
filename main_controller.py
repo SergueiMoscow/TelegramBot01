@@ -1,4 +1,5 @@
 import stock
+import Anekdot
 
 
 def calc(string: str):
@@ -9,11 +10,16 @@ def calc(string: str):
     return result
 
 
-def text_handler(text: str):
+def text_handler(text: str, username: str):
     answer = calc(text)
     if answer is not None:
         return answer
     text = text.replace('/', '')
+    # Проверка на запрос анекдотов / историй
+    if text.lower() == 'a' or text.lower() == 's':
+        an = Anekdot.Anekdot(username)
+        item = an.get_item(text.lower())
+        return f'{item}\n/a   /s'
     instruments = stock.find_instruments(text)
     if instruments is None:
         return None

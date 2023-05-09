@@ -54,27 +54,29 @@ class DbHelper:
             return f'\'{expr}\''
 
     @classmethod
-    def insert(cls, table: str, fields_list: list, values_list: list) -> int:
+    def insert(cls, table: str, fields_list: list, values_list: tuple) -> int:
         fields_list = list(f'`{field}`' for field in fields_list)
         fields = ', '.join(fields_list)
-        values_format = [cls.get_format(value) for value in values_list]
+        # values_format = [cls.get_format(value) for value in values_list]
+        values_format = ['%s'] * len(values_list)
         values_format = ', '.join(values_format)
-        # values_list = [cls.get_value(value) for value in values_list]
-        tuple_values = tuple(values_list)
-        values = ','.join(values_list)
+        #values_list = [cls.get_value(value) for value in values_list]
+        #tuple_values = tuple(values_list)
+        #values = ','.join(values_list)
         query: str = f'insert into {table}({fields}) VALUES ({values_format})'
         print(f'Query: {query}')
-        print(f'Values: {values}')
+        print(f'Values: {values_list}')
 
         cursor = cls.connection.cursor()
-        cursor.execute(query, tuple_values)
+        print(type(values_list[3]))
+        cursor.execute(query, values_list)
         cls.connection.commit()
         return cursor.lastrowid
 
     @classmethod
     def update_or_insert_one(cls, table: str, fields: list, values: list, where: str) -> int:
-        rows = cls.select(table, where, fields.append('id'))
-        if len(rows) == 0:
+        rows = cls.select(table, where, fields + ['id'])
+        if rows is None:
             return cls.insert(table, fields, values)
         row_id: int = rows[0]['id']
         # Меняем where, т.к. меняем ТОЛЬКО ОДНУ запись!
@@ -88,15 +90,26 @@ class DbHelper:
         return row_id
 
     @classmethod
-    def select(cls, table: str, where: str, fields: list = None) -> pymysql.cursors:
+    def select(cls, table: str, where: str, fields: list = None, order: list = None, limit: str = '') -> pymysql.cursors:
+
         if fields is None:
-            fields_list = ' * '
+            fields_list = '*'
         else:
             fields_list = list(f'`{field}`' for field in fields)
             fields_list = ', '.join(fields_list)
-        query: str = f'SELECT {fields_list} from `{table}` where {where}'
+
+        if order is not None:
+            order_by = 'ORDER BY ' + ','.join(order)
+        else:
+            order_by = ''
+
+        query: str = f'SELECT {fields_list} from `{table}` where {where} {order_by} {limit}'
         print(f'Query: {query}')
         cursor = cls.connection.cursor()
         cursor.execute(query)
-        return cursor.fetchall()
+        return cursor.fetchall() if cursor.rowcount > 0 else None
 
+    @classmethod
+    def select_one(cls, table: str, where: str, fields: list = None, order: list = None, limit: str = ''):
+        rows = cls.select(table=table, where=where, fields=fields, order=order, limit=limit)
+        return rows[0] if rows is not None else None

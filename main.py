@@ -35,7 +35,7 @@ async def web_app(message: types.Message):
 
 @dp.message_handler(content_types='text')
 async def check_text(message: types.Message):
-    answer = main_controller.text_handler(message.text)
+    answer = main_controller.text_handler(message.text, message.from_user.username)
     if answer is not None:
         await message.answer(answer, parse_mode='HTML')
 
@@ -45,5 +45,5 @@ async def photo_handler(message: types.Message):
     # https://github.com/aiogram/aiogram/issues/665
     await attachments.file_download(message)
 
-
-executor.start_polling(dp)
+if __name__ == '__main__':
+    executor.start_polling(dp)
