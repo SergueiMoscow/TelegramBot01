@@ -11,8 +11,8 @@ async def file_download(message: types.Message) -> None:
 
     db.insert(
         'photos',
-        ['user', 'added', 'file'],
-        [message.from_user.username, now.strftime('%Y-%m-%d %H:%M:%S'), filename]
+        fields_list=['user', 'added', 'file'],
+        values_list=(message.from_user.username, now.strftime('%Y-%m-%d %H:%M:%S'), filename)
     )
 
     await message.photo[-1].download(

@@ -2,15 +2,12 @@
 # https://core.telegram.org/bots/webapps
 import aiogram
 from aiogram import Bot, Dispatcher, executor, types
-from aiogram.dispatcher import FSMContext
-from aiogram.contrib.fsm_storage.redis import RedisStorage2
-
-from aiogram.types.web_app_info import WebAppInfo
-from aiogram.types import InputMediaPhoto
+from PIL import Image
 import json
 import config
 import main_controller
 import attachments
+from io import BytesIO
 
 bot = Bot(config.telegram_token)
 
@@ -20,7 +17,7 @@ dp = Dispatcher(bot)
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
     markup = types.ReplyKeyboardMarkup()
-    markup.add(types.KeyboardButton('Меню', web_app=WebAppInfo(url=config.url_menu)))
+    # markup.add(types.KeyboardButton('Меню', web_app=WebAppInfo(url=config.url_menu)))
     await message.answer(f'Привет, {message.from_user.username}!', reply_markup=markup)
 
 
@@ -37,12 +34,20 @@ async def web_app(message: types.Message):
 async def check_text(message: types.Message):
     answer = main_controller.text_handler(message.text, message.from_user.username)
     if answer is not None:
-        await message.answer(answer, parse_mode='HTML')
+        if isinstance(answer, str):
+            await message.answer(answer, parse_mode='HTML')
+        elif isinstance(answer, Image.Image):
+            bio = BytesIO()
+            bio.name = 'image.jpeg'
+            answer.save(bio, 'JPEG')
+            bio.seek(0)
+            await bot.send_photo(message.from_user.id, photo=bio)
+        else:
+            await message.answer(type(answer))
 
 
 @dp.message_handler(content_types='photo')
 async def photo_handler(message: types.Message):
-    # https://github.com/aiogram/aiogram/issues/665
     await attachments.file_download(message)
 
 if __name__ == '__main__':
