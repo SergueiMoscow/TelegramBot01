@@ -37,7 +37,7 @@ class Anekdot:
         else:
             item = row['an_id'], row['text']
         self._register_read(category, latest_unread, item[0])
-        return item[1]
+        return f'{item[1]}\n{latest_unread[LATEST_UNREAD_DATE]} ({latest_unread[LATEST_UNREAD_INDEX]})'
 
     def _calc_latest_unread(self, category: str) -> tuple:
         """Calculates last unread item"""
