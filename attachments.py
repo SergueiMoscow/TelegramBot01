@@ -5,6 +5,7 @@ import DbHelper
 
 
 async def file_download(message: types.Message) -> None:
+    """Downloads image from message and register it in database."""
     now = datetime.datetime.now()
     db = DbHelper.DbHelper()
     filename = now.strftime('%Y%m%d_%H%M%S_%f')

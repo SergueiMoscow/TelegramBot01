@@ -2,6 +2,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 def draw_price(ticker: str, name: str, price: str, open: str, change_string: str):
+    """Draws a picture with the latest price, open price and daily change."""
     im_width = 200
     im_height = 100
     color = '#333333'

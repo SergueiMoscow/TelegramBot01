@@ -24,6 +24,7 @@ class Anekdot:
         self._user = user
 
     def get_item(self, category: str) -> str:
+        """Returns item(anekdot or story) for display as message from bot"""
         latest_unread = self._calc_latest_unread(category)
         row = db.select_one(
             table=self._table_items,
@@ -39,6 +40,7 @@ class Anekdot:
         return item[1]
 
     def _calc_latest_unread(self, category: str) -> tuple:
+        """Calculates last unread item"""
         category = category.lower()
         rows = db.select(
             table=self._table_user,
@@ -74,11 +76,13 @@ class Anekdot:
 
     @staticmethod
     def _get_url(category: str, date: str) -> str:
+        """Constructs URL string to download items"""
         url_category = 'anekdot' if category.lower() == 'a' else 'story'
         return f'{BASE_URL}{url_category}/day/{date}/'
 
     @classmethod
     def _get_content(cls, url: str, category: str, latest_unread: tuple) -> tuple:
+        """Downloads page, parses it to items and saves to database"""
         date = latest_unread[LATEST_UNREAD_DATE]
         index = latest_unread[LATEST_UNREAD_INDEX]
         print(f'url(get_content): {url}')
@@ -94,6 +98,7 @@ class Anekdot:
         return an_id, text
 
     def _register_read(self, category: str, latest_unread: tuple, an_id: int) -> None:
+        """Marks as read item for user"""
         where = f"`user`='{self._user}' AND date='{latest_unread[LATEST_UNREAD_DATE]}' AND category='{category}'"
         rows = db.select(
             table=self._table_user,
@@ -119,6 +124,7 @@ class Anekdot:
 
     @classmethod
     def _save_in_db(cls, list_items, category: str, date: str) -> None:
+        """Saves downloaded items to database"""
         for counter in range(MAX_ITEMS_PER_DAY):
             # index +1 потому что 0й в заголовке
             an_id, text = cls.clear_item_from_tags(list_items[counter + 1])
@@ -131,6 +137,7 @@ class Anekdot:
 
     @staticmethod
     def clear_item_from_tags(item) -> tuple:
+        """Parses item deleting all HTML tags"""
         text = item.find_all('div', 'text')[0].get_text()
         an_id = item['data-id']
         return an_id, text

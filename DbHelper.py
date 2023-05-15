@@ -11,6 +11,7 @@ class DbHelper:
 
     @classmethod
     def connect(cls):
+        """Connects to database."""
         try:
             cls.connection = pymysql.connect(
                 host=config.mysql_host,
@@ -25,6 +26,7 @@ class DbHelper:
 
     @classmethod
     def query(cls, query: str, params: list = None):
+        """Executes query and returns result"""
         result = None
         try:
             cursor = cls.connection.cursor()
@@ -36,6 +38,7 @@ class DbHelper:
 
     @staticmethod
     def get_format(expr):
+        """Returns format %s, %d, %i of expression"""
         if isinstance(expr, str):
             return '%s'
         elif isinstance(expr, float):
@@ -47,7 +50,8 @@ class DbHelper:
 
     @staticmethod
     def get_value(expr):
-        if isinstance(expr, float) or  isinstance(expr, int):
+        """Adds quotes if expression is text"""
+        if isinstance(expr, float) or isinstance(expr, int):
             return f'{expr}'
         else:
             expr.replace("'", "\'")
@@ -55,6 +59,7 @@ class DbHelper:
 
     @classmethod
     def insert(cls, table: str, fields_list: list, values_list: tuple) -> int:
+        """Inserts record to table"""
         fields_list = list(f'`{field}`' for field in fields_list)
         fields = ', '.join(fields_list)
         # values_format = [cls.get_format(value) for value in values_list]
@@ -75,6 +80,7 @@ class DbHelper:
 
     @classmethod
     def update_or_insert_one(cls, table: str, fields: list, values: list, where: str) -> int:
+        """Updates or inserts record to table"""
         rows = cls.select(table, where, fields + ['id'])
         if rows is None:
             return cls.insert(table, fields, values)
@@ -91,6 +97,7 @@ class DbHelper:
 
     @classmethod
     def select(cls, table: str, where: str, fields: list = None, order: list = None, limit: str = '') -> pymysql.cursors:
+        """Construct the SELECT, executes, and returns rows"""
 
         if fields is None:
             fields_list = '*'
@@ -111,5 +118,6 @@ class DbHelper:
 
     @classmethod
     def select_one(cls, table: str, where: str, fields: list = None, order: list = None, limit: str = ''):
+        """Selects on record with condition WHERE"""
         rows = cls.select(table=table, where=where, fields=fields, order=order, limit=limit)
         return rows[0] if rows is not None else None
