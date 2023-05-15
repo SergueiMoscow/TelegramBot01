@@ -99,7 +99,7 @@ def get_candles(figi, days_before=1) -> list:
             interval=CandleInterval.CANDLE_INTERVAL_DAY,
         ):
             candles.append(candle)
-    df = pd.DataFrame(candles)
+    #df = pd.DataFrame(candles)
     # df.to_csv(f'candles_{figi}.csv')
     return candles
 

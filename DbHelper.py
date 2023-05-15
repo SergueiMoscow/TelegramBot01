@@ -73,7 +73,6 @@ class DbHelper:
         print(f'Values: {values_list}')
 
         cursor = cls.connection.cursor()
-        print(type(values_list[3]))
         cursor.execute(query, values_list)
         cls.connection.commit()
         return cursor.lastrowid
