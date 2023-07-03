@@ -1,5 +1,5 @@
 import stock
-import Anekdot
+import Handler
 
 
 def calc(string: str):
@@ -19,7 +19,7 @@ def text_handler(text: str, username: str):
     text = text.replace('/', '')
     # Проверка на запрос анекдотов / историй
     if text.lower() == 'a' or text.lower() == 's':
-        an = Anekdot.Anekdot(username)
+        an = Handler.Handler(username)
         item = an.get_item(text.lower())
         return f'{item}\n/a   /s'
     instruments = stock.find_instruments(text)

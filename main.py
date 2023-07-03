@@ -6,7 +6,7 @@ import main_controller
 import attachments
 from io import BytesIO
 
-bot = Bot(config.telegram_token)
+bot = Bot(config.TELEGRAM_TOKEN)
 
 dp = Dispatcher(bot)
 

@@ -44,7 +44,7 @@ def get_info(figi):
 
 def find_instruments(query: str) -> pd.DataFrame:
     """Searchs instrument by name or ticker in stocks and futures"""
-    with Client(config.tinkoff_token) as client:
+    with Client(config.TINKOFF_TOKEN) as client:
         r = client.instruments.find_instrument(query=query.upper())
         df = pd.DataFrame(r.instruments)
         print(f'find_instruments 1st df: {query.upper()}: {df}')
@@ -63,7 +63,7 @@ def find_instruments(query: str) -> pd.DataFrame:
 
 def get_by_figi(figi: str):
     """Searchs and returns instrument by FIGI (financial Instrument Global Identifier"""
-    with Client(config.tinkoff_token) as client:
+    with Client(config.TINKOFF_TOKEN) as client:
         try:
             i = client.instruments.get_instrument_by(id_type=InstrumentIdType.INSTRUMENT_ID_TYPE_FIGI, id=figi)
         except:
@@ -73,7 +73,7 @@ def get_by_figi(figi: str):
 
 def get_last_prices(figi: list):
     """Get last price of stocks or feature"""
-    with Client(config.tinkoff_token) as client:
+    with Client(config.TINKOFF_TOKEN) as client:
         last_price = (client.market_data.get_last_prices(figi=[figi]))
         last_price = quotation_to_decimal(last_price.last_prices[0].price)
         return last_price
@@ -92,7 +92,7 @@ def get_last_prices(figi: list):
 def get_candles(figi, days_before=1) -> list:
     """Get last day candle"""
     candles = []
-    with Client(config.tinkoff_token) as client:
+    with Client(config.TINKOFF_TOKEN) as client:
         for candle in client.get_all_candles(
             figi=figi,  # "BBG004730N88",
             from_=now() - timedelta(days=days_before),
@@ -107,7 +107,7 @@ def get_candles(figi, days_before=1) -> list:
 #another way to get candles:
 def get_candles2(figi, days_before=1) -> list:
     candles = []
-    with Client(config.tinkoff_token) as client:
+    with Client(config.TINKOFF_TOKEN) as client:
         r = client.market_data.get_candles(
             figi=figi,
             from_=datetime.utcnow() - timedelta(days=days_before),

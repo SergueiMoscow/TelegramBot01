@@ -1,5 +1,3 @@
-# Config file
-config.py
 # Temporary csv files
 *.csv
 # Byte-compiled / optimized / DLL files

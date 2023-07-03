@@ -3,9 +3,15 @@ import datetime
 
 import requests
 import bs4
-from DbHelper import DbHelper as db
+from sqlalchemy.exc import NoResultFound
+from sqlalchemy.orm import sessionmaker
+
+# from DbHelper import DbHelper as db
 
 import ssl
+
+from models import engine, AnekdotUser, Anekdot
+
 ssl._create_default_https_context = ssl._create_unverified_context
 BASE_URL = 'https://www.anekdot.ru/release/'
 LATEST_UNREAD_DATE = 0
@@ -13,42 +19,46 @@ LATEST_UNREAD_INDEX = 1
 MAX_ITEMS_PER_DAY = 5
 
 
-class Anekdot:
+class Handler:
 
     _user = None
     _table_user = 'anekdot_user'
     _table_items = 'anekdot'
 
     def __init__(self, user):
-        db.connect()
         self._user = user
 
     def get_item(self, category: str) -> str:
         """Returns item(anekdot or story) for display as message from bot"""
-        latest_unread = self._calc_latest_unread(category)
-        row = db.select_one(
-            table=self._table_items,
-            fields=['an_id', 'text'],
-            where=f"category='{category}' AND `date`='{latest_unread[LATEST_UNREAD_DATE]}' AND consecutive={latest_unread[LATEST_UNREAD_INDEX]}",
-        )
+        latest_unread = self.calc_latest_unread(category)
+        _session = sessionmaker(bind=engine)
+        session = _session()
+        row = session.query(Anekdot.an_id, Anekdot.text).\
+            filter(Anekdot.category == category).\
+            filter(Anekdot.date == latest_unread[LATEST_UNREAD_DATE]).\
+            filter(Anekdot.consecutive == latest_unread[LATEST_UNREAD_INDEX]).\
+            first()
+
         if row is None:
             url = self._get_url(category, latest_unread[LATEST_UNREAD_DATE])
             item = self._get_content(url, category, latest_unread)
         else:
-            item = row['an_id'], row['text']
+            item = row.an_id, row.text
         self._register_read(category, latest_unread, item[0])
         return f'{item[1]}\n{latest_unread[LATEST_UNREAD_DATE]} ({latest_unread[LATEST_UNREAD_INDEX]})'
 
-    def _calc_latest_unread(self, category: str) -> tuple:
+    def calc_latest_unread(self, category: str) -> tuple:
         """Calculates last unread item"""
         category = category.lower()
-        rows = db.select(
-            table=self._table_user,
-            where=f"`user`='{self._user}' AND `category`='{category}'",
-            fields=['date', 'passed'],
-            order=['`date` DESC']
-        )
-        read = {el['date']: el['passed'] for el in rows} if rows is not None else {}
+        _session = sessionmaker(bind=engine)
+        session = _session()
+        rows = session.query(AnekdotUser.date, AnekdotUser.passed).\
+            filter(AnekdotUser.user == self._user,  AnekdotUser.category == category).\
+            order_by(AnekdotUser.date.desc()).all()
+        session.close()
+        print(rows)
+        # read = {read['date']: read['passed'] for el in rows} if rows is not None else {}
+        read = {date: value for date, value in rows}
         mask = '%Y-%m-%d'
         now = datetime.datetime.now()
         yesterday = now - datetime.timedelta(days=1)
@@ -99,41 +109,50 @@ class Anekdot:
 
     def _register_read(self, category: str, latest_unread: tuple, an_id: int) -> None:
         """Marks as read item for user"""
-        where = f"`user`='{self._user}' AND date='{latest_unread[LATEST_UNREAD_DATE]}' AND category='{category}'"
-        rows = db.select(
-            table=self._table_user,
-            fields=['an_ids'],
-            where=where
-        )
-        if rows is not None and len(rows) > 0:
-            read_ids = f"{rows[0]['an_ids']},{an_id}"
-        else:
-            read_ids = str(an_id)
-        db.update_or_insert_one(
-            table=self._table_user,
-            fields=['user', 'date', 'category', 'passed', 'an_ids'],
-            values=[
-                self._user,
-                latest_unread[LATEST_UNREAD_DATE],
-                category.lower(),
-                latest_unread[LATEST_UNREAD_INDEX],
-                read_ids
-            ],
-            where=where
-        )
+        _session = sessionmaker(bind=engine)
+        with _session() as session:
+            try:
+                anekdot_user = session.query(AnekdotUser). \
+                    filter(AnekdotUser.user == self._user). \
+                    filter(AnekdotUser.date == latest_unread[LATEST_UNREAD_DATE]). \
+                    filter(AnekdotUser.category == category). \
+                    one_or_none()
+            except NoResultFound:
+                anekdot_user = None
+
+            if anekdot_user is None:
+                anekdot_user = AnekdotUser(
+                    user=self._user,
+                    date=latest_unread[LATEST_UNREAD_DATE],
+                    category=category,
+                    an_ids=str(an_id),
+                    passed=latest_unread[LATEST_UNREAD_INDEX]
+                )
+                session.add(anekdot_user)
+            else:
+                anekdot_user.an_ids = f"{anekdot_user.an_ids},{an_id}"
+                anekdot_user.passed = latest_unread[LATEST_UNREAD_INDEX]
+
+            session.commit()
+            session.close()
 
     @classmethod
     def _save_in_db(cls, list_items, category: str, date: str) -> None:
         """Saves downloaded items to database"""
-        for counter in range(MAX_ITEMS_PER_DAY):
-            # index +1 потому что 0й в заголовке
-            an_id, text = cls.clear_item_from_tags(list_items[counter + 1])
-            db.insert(
-                table=cls._table_items,
-                fields_list=['date', 'category', 'consecutive', 'an_id', 'text'],
-                values_list=(date, category, counter, an_id, text)
-            )
-            counter += 1
+        _session = sessionmaker(bind=engine)
+        with _session() as session:
+            for counter, item in enumerate(list_items[1:MAX_ITEMS_PER_DAY + 1], start=1):
+                an_id, text = cls.clear_item_from_tags(item)
+                anekdot = Anekdot(
+                    date=date,
+                    category=category,
+                    consecutive=counter-1,
+                    an_id=an_id,
+                    text=text
+                )
+                session.add(anekdot)
+            session.commit()
+            session.close()
 
     @staticmethod
     def clear_item_from_tags(item) -> tuple:
@@ -141,3 +160,7 @@ class Anekdot:
         text = item.find_all('div', 'text')[0].get_text()
         an_id = item['data-id']
         return an_id, text
+
+
+if __name__ == '__main__':
+    print(Anekdot.calc_latest_unread('A', 'aaa'))

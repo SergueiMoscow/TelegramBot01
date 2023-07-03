@@ -1,20 +1,26 @@
 from aiogram import Bot, Dispatcher, executor, types
 import datetime
+
+from sqlalchemy.orm import sessionmaker
+
 import config
-import DbHelper
+from models import Photo, engine
 
 
 async def file_download(message: types.Message) -> None:
     """Downloads image from message and register it in database."""
     now = datetime.datetime.now()
-    db = DbHelper.DbHelper()
     filename = now.strftime('%Y%m%d_%H%M%S_%f')
-
-    db.insert(
-        'photos',
-        fields_list=['user', 'added', 'file'],
-        values_list=(message.from_user.username, now.strftime('%Y-%m-%d %H:%M:%S'), filename)
+    _session = sessionmaker(bind=engine)
+    session = _session()
+    photo = Photo(
+        user=message.from_user.username,
+        file=filename,
+        description=message.md_text
     )
+    session.add(photo)
+    session.commit()
+    session.close()
 
     await message.photo[-1].download(
         destination_file=f'{config.save_path}{message.from_user.username}/{filename}.jpg',
