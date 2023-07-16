@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, Column, Integer, String, Text, UniqueConstraint, Index, func, DateTime
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import declarative_base
 
 from config import DB_ENGINE, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_DBNAME
 

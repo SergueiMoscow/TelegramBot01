@@ -34,3 +34,5 @@ def text_handler(text: str, username: str):
     return info
 
 
+if __name__ == '__main__':
+    print(text_handler('s', 'aaa'))

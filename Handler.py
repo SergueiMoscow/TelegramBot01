@@ -5,6 +5,7 @@ import requests
 import bs4
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import sessionmaker
+import logging
 
 # from DbHelper import DbHelper as db
 
@@ -31,6 +32,7 @@ class Handler:
     def get_item(self, category: str) -> str:
         """Returns item(anekdot or story) for display as message from bot"""
         latest_unread = self.calc_latest_unread(category)
+        log(f'Latest unread: {latest_unread}')
         _session = sessionmaker(bind=engine)
         session = _session()
         row = session.query(Anekdot.an_id, Anekdot.text).\
@@ -40,10 +42,14 @@ class Handler:
             first()
 
         if row is None:
+            log('Row is not found')
             url = self._get_url(category, latest_unread[LATEST_UNREAD_DATE])
             item = self._get_content(url, category, latest_unread)
+            log(f'Item: % {item[0:20]}')
         else:
+            log('Row found')
             item = row.an_id, row.text
+            log(f'Item: % {item[0:20]}')
         self._register_read(category, latest_unread, item[0])
         return f'{item[1]}\n{latest_unread[LATEST_UNREAD_DATE]} ({latest_unread[LATEST_UNREAD_INDEX]})'
 
@@ -162,5 +168,16 @@ class Handler:
         return an_id, text
 
 
+def log(string: str):
+    logging.basicConfig(
+        filename='debug.log',
+        level=logging.DEBUG,
+        format=f'%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s'
+    )
+    logging.info(string)
+
+
 if __name__ == '__main__':
-    print(Anekdot.calc_latest_unread('A', 'aaa'))
+    h = Handler('Serguei_Sushkov')
+    print(h.calc_latest_unread('s'))
+    print(h.get_item('s'))

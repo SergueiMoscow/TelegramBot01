@@ -25,7 +25,13 @@ async def check_text(message: types.Message):
     answer = main_controller.text_handler(message.text, message.from_user.username)
     if answer is not None:
         if isinstance(answer, str):
-            await message.answer(answer, parse_mode='HTML')
+            # так ошибка message too long
+            # await message.answer(answer, parse_mode='HTML')
+            if len(answer) > 4096:
+                for x in range(0, len(answer), 4096):
+                    await message.answer(answer[x:x + 4096], parse_mode='HTML')
+            else:
+                await message.answer(answer, parse_mode='HTML')
         elif isinstance(answer, Image.Image):
             bio = BytesIO()
             bio.name = 'image.jpeg'
@@ -33,7 +39,13 @@ async def check_text(message: types.Message):
             bio.seek(0)
             await bot.send_photo(message.from_user.id, photo=bio)
         else:
-            await message.answer(answer)
+            # if len > 4096 -> error
+            # await message.answer(answer)
+            if len(answer) > 4096:
+                for x in range(0, len(answer), 4096):
+                    await message.answer(answer[x:x + 4096])
+            else:
+                await message.answer(answer)
 
 
 @dp.message_handler(content_types='photo')
