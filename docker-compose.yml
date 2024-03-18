@@ -1,0 +1,35 @@
+version: '3.10'
+services:
+  telegram_bot_01:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/app
+      - "/storages:/storages"
+    environment:
+      DATABASE_URI: postgresql://postgres:postgres@db:5433/s_media_service
+    depends_on:
+      - db
+      - migrations
+    restart: always
+
+  db:
+    image: postgres:14.3
+    ports:
+      - "5433:5433"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: telegram01
+    restart: always
+
+  migrations:
+    build:
+      context: .
+    command: bash -c 'while !</dev/tcp/db/5433; do sleep 1; done; alembic upgrade head'
+    restart: "no"
+    environment:
+      DATABASE_URI: postgresql://postgres:postgres@db:5433/telegrambot01
+    depends_on:
+      - db

@@ -1,17 +1,23 @@
-import stock
-import Handler
+import logging
+
+from app.handlers import stock
+from app.handlers.AnekdotHandler import AnekdotHandler
+from app.settings import settings
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename=settings.LOG_FILE, encoding='utf-8', level=logging.DEBUG)
 
 
 def calc(string: str):
     """Check if and calculate if string can be evaluated"""
     try:
         result = eval(string)
-    except:
+    except Exception:
         result = None
     return result
 
 
-def text_handler(text: str, username: str):
+async def text_handler(text: str, username: str):
     """Handler text input"""
     answer = calc(text)
     if answer is not None:
@@ -19,8 +25,8 @@ def text_handler(text: str, username: str):
     text = text.replace('/', '')
     # Проверка на запрос анекдотов / историй
     if text.lower() == 'a' or text.lower() == 's':
-        an = Handler.Handler(username)
-        item = an.get_item(text.lower())
+        an = AnekdotHandler(username)
+        item = await an.get_item(text.lower())
         return f'{item}\n/a   /s'
     instruments = stock.find_instruments(text)
     if instruments is None:
@@ -28,11 +34,7 @@ def text_handler(text: str, username: str):
     if instruments.shape[0] > 1:
         instruments['ticker'] = '/' + instruments['ticker']
         return f'Уточните запрос: \n{instruments}'
-    print(f'main_controller: 31: {instruments}')
+    logger.warning(f'main_controller: 31: {instruments}')
     figi = instruments.iloc[0]['figi']
     info = stock.get_info(figi)
     return info
-
-
-if __name__ == '__main__':
-    print(text_handler('s', 'aaa'))

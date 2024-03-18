@@ -10,7 +10,7 @@ def draw_price(ticker: str, name: str, price: str, open: str, change_string: str
     f_open = float(open)
     # font_name = 'fonts/arial/arial.ttf'
     font_name = 'fonts/MSSansSerif/microsoftsansserif.ttf'
-    price_color = "green" if f_price > f_open else "red"
+    price_color = 'green' if f_price > f_open else 'red'
     im = Image.new('RGB', (im_width, im_height), (219, 219, 219))
     draw = ImageDraw.Draw(im)
     # Price
@@ -31,4 +31,4 @@ def draw_price(ticker: str, name: str, price: str, open: str, change_string: str
     _, _, w, h = draw.textbbox((0, 0), change_string, font=font)
     draw.text((im_width - w, bottom_price + h / 2), change_string, fill=price_color, font=font)
     return im
-    #im.show()
+    # im.show()

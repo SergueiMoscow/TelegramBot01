@@ -1,13 +1,6 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, UniqueConstraint, Index, func, DateTime
-from sqlalchemy.orm import declarative_base
+from sqlalchemy import Column, DateTime, Index, Integer, String, Text, UniqueConstraint, func
 
-from config import DB_ENGINE, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_DBNAME
-
-url_engine = f'{DB_ENGINE}://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_DBNAME}'
-print(f'{url_engine}')
-engine = create_engine(url_engine)
-
-Base = declarative_base()
+from app.db.db import Base
 
 
 class Anekdot(Base):
@@ -28,7 +21,7 @@ class AnekdotUser(Base):
 
     id = Column(Integer, primary_key=True)
     user = Column(String(255))
-    date = Column(String(10))
+    date = Column(String(10))  # Формат YYYYMMDD
     category = Column(String(1))
     passed = Column(Integer, default=0)
     an_ids = Column(String(255))
@@ -48,7 +41,3 @@ class Photo(Base):
     file = Column(String(255))
     description = Column(Text)
     created_at = Column(DateTime, server_default=func.now(), index=True)
-
-
-if __name__ == '__main__':
-    Base.metadata.create_all(engine)
