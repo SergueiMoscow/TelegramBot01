@@ -28,7 +28,7 @@ services:
   migrations:
     build:
       context: .
-    command: bash -c 'while !</dev/tcp/db/5433; do sleep 1; done; alembic upgrade head; ./db_restore.sh'
+    command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; alembic upgrade head; ./db_restore.sh'
     restart: "no"
     environment:
       env_file: .env
