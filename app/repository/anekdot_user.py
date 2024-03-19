@@ -27,6 +27,12 @@ async def find_last_unread_anekdot(
     last_read_anekdots = (await session.execute(query)).scalars().all()
 
     if last_read_anekdots:
+        # Проверяем есть ли анекдоты за вчерашний день
+        yesterday_anekdots = [anekdot for anekdot in last_read_anekdots
+                              if anekdot.date == yesterday.strftime(settings.DATE_FORMAT)]
+        if not yesterday_anekdots:
+            return {'date': yesterday.strftime(settings.DATE_FORMAT), 'next': 1}
+
         # Получить дату последнего прочитанного анекдота
         last_date = datetime.strptime(last_read_anekdots[0].date, settings.DATE_FORMAT)
         for anekdot in last_read_anekdots:
