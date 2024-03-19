@@ -17,18 +17,21 @@ services:
   db:
     image: postgres:14.3
     ports:
-      - "5433:5432"
+      - "5433:5433"
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-
+    command:
+      - "postgres"
+      - "-c"
+      - "port=5433"
     restart: always
 
   migrations:
     build:
       context: .
-    command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; alembic upgrade head; ./db_restore.sh'
+    command: bash -c 'while !</dev/tcp/db/5433; do sleep 1; done; alembic upgrade head; ./db_restore.sh'
     restart: "no"
     environment:
       env_file: .env
